@@ -1,8 +1,7 @@
 import axios from 'axios';
 
 export default async function handler(req, res) {
-  const videoId = req.query.id; // You call: /api/tikvideo?id=6811123699203329285
-
+  const videoId = req.query.id;
   if (!videoId) {
     return res.status(400).json({ error: 'Missing TikTok video ID (`id` query)' });
   }
@@ -12,17 +11,17 @@ export default async function handler(req, res) {
       params: { aweme_id: videoId },
       headers: {
         'x-rapidapi-host': 'scraptik.p.rapidapi.com',
-        'x-rapidapi-key': '79964fe645msh67fc7c7871bb265p1bfb72jsn1fd710710b56' // Set this in Vercel project settings
+        'x-rapidapi-key': process.env.RAPIDAPI_KEY
       }
     });
-
-    res.json({
+    return res.json({
       success: true,
       video_id: videoId,
       video_url: response.data.video
     });
-
   } catch (error) {
-    res.status(500).json({ error: error.message || 'Request failed' });
+    console.error('API call error:', error.response?.data || error.message);
+    return res.status(500).json({ error: 'Failed to fetch video from RapidAPI' });
   }
-    }
+      }
+      
