@@ -15,28 +15,42 @@ async function getVideoIds(username) {
   const url = `https://www.tiktok.com/@${username}`;
   const res = await axios.get(url, {
     headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
       'Accept-Language': 'en-US,en;q=0.9',
-      'Referer': 'https://www.tiktok.com/'
+      'Referer': 'https://www.tiktok.com/',
+      // 'Cookie': 'tt_webid_v2=YOUR_VALID_COOKIE;' // Optional: add if blocked
     }
   });
 
   const html = res.data;
   const $ = cheerio.load(html);
-  const scriptText = $('script#__NEXT_DATA__').html();
-  if (!scriptText) throw new Error('Failed to find __NEXT_DATA__');
+
+  let scriptText = $('script#__NEXT_DATA__').html();
+
+  if (!scriptText) {
+    // Fallback to SIGI_STATE
+    scriptText = $('script#SIGI_STATE').html();
+    if (!scriptText) throw new Error('Failed to find __NEXT_DATA__ or SIGI_STATE');
+  }
 
   const data = JSON.parse(scriptText);
 
-  const videos = data?.props?.pageProps?.items || data?.props?.pageProps?.userData?.user?.videos || null;
-
-  if (!videos || !videos.length) {
-    const itemList = data?.props?.pageProps?.videoData?.items;
-    if (itemList && itemList.length) return itemList.map(v => v.id);
-    throw new Error('No videos found for user');
+  // Try to extract video list from __NEXT_DATA__
+  if (data?.props?.pageProps?.items?.length) {
+    return data.props.pageProps.items.map(v => v.id);
   }
 
-  return videos.map(v => v.id);
+  // Try to extract video list from SIGI_STATE
+  if (data?.ItemModule) {
+    return Object.values(data.ItemModule).map(v => v.id);
+  }
+
+  // Try other common paths
+  if (data?.props?.pageProps?.videoData?.items?.length) {
+    return data.props.pageProps.videoData.items.map(v => v.id);
+  }
+
+  throw new Error('No videos found for user');
 }
 
 app.get('/api/tikstalk', async (req, res) => {
@@ -70,4 +84,4 @@ app.get('/api/tikstalk', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`TikStalk API running on port ${PORT}`));
-    
+  
