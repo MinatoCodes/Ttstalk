@@ -12,7 +12,7 @@ export default async function handler(req, res) {
       params: { aweme_id: videoId },
       headers: {
         'x-rapidapi-host': 'scraptik.p.rapidapi.com',
-        'x-rapidapi-key': process.env.RAPIDAPI_KEY // Set this in Vercel project settings
+        'x-rapidapi-key': '79964fe645msh67fc7c7871bb265p1bfb72jsn1fd710710b56' // Set this in Vercel project settings
       }
     });
 
