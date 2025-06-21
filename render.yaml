@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: tiktok-shortlink-api
-    env: node
-    buildCommand: "npm install"
-    startCommand: "npm start"
-    plan: free
-    auto deploy: off
-    
