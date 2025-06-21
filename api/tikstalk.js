@@ -1,27 +1,65 @@
-import axios from 'axios';
+const express = require("express");
+const axios = require("axios");
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-export default async function handler(req, res) {
-  const videoId = req.query.id;
-  if (!videoId) {
-    return res.status(400).json({ error: 'Missing TikTok video ID (`id` query)' });
-  }
+// TikTok usernames
+const usernames = [
+  "xrajeditz63",
+  "anup_raee",
+  "sa_phal",
+  "sushil_patel0"
+];
+
+app.get("/api/tikstalk", async (req, res) => {
+  // Step 1: Pick a random username
+  const username = usernames[Math.floor(Math.random() * usernames.length)];
 
   try {
-    const response = await axios.get('https://scraptik.p.rapidapi.com/video-without-watermark', {
-      params: { aweme_id: videoId },
-      headers: {
-        'x-rapidapi-host': 'scraptik.p.rapidapi.com',
-        'x-rapidapi-key': process.env.RAPIDAPI_KEY
-      }
+    // Step 2: Fetch all videos for that user
+    const response = await axios.post("https://tikwm.com/api/user/posts", {
+      unique_id: username,
+      count: 100
+    }, {
+      headers: { "Content-Type": "application/json" }
     });
-    return res.json({
+
+    const videos = response.data?.data?.videos || [];
+
+    if (!videos.length) {
+      return res.status(404).json({
+        success: false,
+        message: `No videos found for user @${username}`
+      });
+    }
+
+    // Step 3: Pick a random video from those
+    const randomVideo = videos[Math.floor(Math.random() * videos.length)];
+
+    // Step 4: Return random video details
+    res.json({
       success: true,
-      video_id: videoId,
-      video_url: response.data.video
-    });
-  } catch (error) {
-    console.error('API call error:', error.response?.data || error.message);
-    return res.status(500).json({ error: 'Failed to fetch video from RapidAPI' });
-  }
+      username,
+      video: {
+        id: randomVideo.id,
+        title: randomVideo.title,
+        play: randomVideo.play, // direct video URL
+        cover: randomVideo.cover,
+        create_time: randomVideo.create_time
       }
-      
+    });
+
+  } catch (err) {
+    console.error(`❌ Error fetching videos for @${username}:`, err.message);
+    res.status(500).json({
+      success: false,
+      message: `Failed to fetch videos for @${username}`,
+      error: err.message
+    });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 API running on http://localhost:${PORT}/api/tikstalk`);
+});
+        
